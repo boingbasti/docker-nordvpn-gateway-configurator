@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NordVPN Gateway Config Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body { background-color: #f8f9fa; padding-top: 20px; padding-bottom: 50px; }
+        .card { margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .code-block { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre; font-size: 0.9rem; }
+        .accordion-button:not(.collapsed) { background-color: #e7f1ff; color: #0c63e4; }
+        .hook-box { font-family: monospace; font-size: 0.85rem; background: #f1f1f1; border: 1px solid #ccc; }
+        
+        /* Design Tweaks */
+        .form-control, .form-select, .input-group-text { border-color: #6c757d; }
+        .form-check-input { border-color: #6c757d; cursor: pointer; }
+        .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
+        
+        /* Info Icon Style */
+        .info-icon { cursor: help; font-size: 0.9rem; color: #6c757d; margin-left: 5px; }
+        .info-icon:hover { color: #0d6efd; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="text-center mb-4">
+        <h1>🛡️ NordVPN Config Generator</h1>
+        <p class="lead">Create your perfect, fully customized <code>docker-compose.yml</code>.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5">
+            <form id="configForm">
+                
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white fw-bold">1. Network Architecture</div>
+                    <div class="card-body">
+                        <label class="form-label">Mode <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Choose 'Simple' for a basic SOCKS5 proxy. Choose 'Advanced' to create a full LAN Gateway with its own IP (macvlan)."></i></label>
+                        <select class="form-select mb-3" id="networkMode" onchange="toggleFields()">
+                            <option value="simple">Simple Proxy (No macvlan)</option>
+                            <option value="advanced" selected>Advanced Gateway (macvlan)</option>
+                        </select>
+                        
+                        <div id="macvlanSettings">
+                            <label class="form-label">Gateway IP <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="The static LAN IP address for the VPN container. Must be unused in your network."></i></label>
+                            <input type="text" class="form-control mb-2" id="gatewayIp" value="192.168.1.100">
+                            
+                            <label class="form-label">Docker Network Name <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="The name of the external docker network you created on your host. Default is 'macvlan'."></i></label>
+                            <input type="text" class="form-control" id="extNetName" value="macvlan">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white fw-bold">2. VPN Connection</div>
+                    <div class="card-body">
+                        <label class="form-label fw-bold">Authentication</label>
+                        <input type="text" class="form-control mb-2" id="vpnToken" placeholder="Paste Token here (optional)" oninput="toggleFields()">
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" id="embedToken" onchange="toggleFields()">
+                            <label class="form-check-label text-danger small">Embed Token in YAML (Insecure!) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="If checked, the token is written directly into the file. If unchecked (recommended), it uses a file mount (secrets)."></i></label>
+                        </div>
+                        <div id="tokenWarning" class="text-danger fw-bold small mb-3" style="display:none;">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Warning: 'Embed' is checked but no Token provided!
+                        </div>
+                        <hr>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Country</label>
+                                <select class="form-select" id="vpnCountry">
+                                    <option value="Germany" selected>Germany</option>
+                                    <option value="United States">United States</option>
+                                    <option value="United Kingdom">United Kingdom</option>
+                                    <option value="Switzerland">Switzerland</option>
+                                    <option value="Netherlands">Netherlands</option>
+                                    <option value="France">France</option>
+                                    <option value="Canada">Canada</option>
+                                    <option value="Japan">Japan</option>
+                                    <option value="Australia">Australia</option>
+                                    </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Group <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Server category. P2P is recommended for file sharing."></i></label>
+                                <select class="form-select" id="vpnGroup">
+                                    <option value="p2p" selected>P2P</option>
+                                    <option value="standard">Standard</option>
+                                    <option value="double_vpn">Double VPN</option>
+                                    <option value="onion_over_vpn">Onion over VPN</option>
+                                    <option value="obfuscated">Obfuscated</option>
+                                    <option value="dedicated_ip">Dedicated IP</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <label class="form-label">Specific Server (Optional) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Enter a server ID (e.g. 'de1234') to always connect to this specific server. Overrides Country/Group."></i></label>
+                        <input type="text" class="form-control mb-3" id="vpnServer" placeholder="e.g. de1234" oninput="toggleFields()">
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="killswitch" checked>
+                            <label class="form-check-label">Killswitch <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Blocks all internet traffic if the VPN connection drops to prevent data leaks."></i></label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="tpl" checked>
+                            <label class="form-check-label">Threat Protection Lite <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Enables DNS-based blocking of ads, trackers, and malicious domains."></i></label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoConnect" checked onchange="toggleFields()">
+                            <label class="form-check-label">Smart Server Selection <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Pings multiple servers in the chosen group to find the one with the lowest latency."></i></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-warning" id="routingCard">
+                    <div class="card-header bg-warning text-dark fw-bold">3. Routing & WireGuard</div>
+                    <div class="card-body">
+                        <label class="form-label">Allowed LAN Subnets <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Traffic from these IPs will be routed through the VPN. Typically your Home LAN and your WireGuard client subnet."></i></label>
+                        <input type="text" class="form-control mb-2" id="allowlist" value="192.168.1.0/24">
+                        <div class="form-text">Comma-separated (e.g. 192.168.1.0/24, 10.10.10.0/24).</div>
+                        
+                        <hr>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="wgBypass" onchange="toggleFields()">
+                            <label class="form-check-label fw-bold">WireGuard Bypass (wg-easy) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Enables special routing to allow a local WireGuard server to utilize the VPN tunnel."></i></label>
+                        </div>
+
+                        <div id="wgSettings" class="bg-light p-2 rounded border" style="display:none;">
+                            <label class="form-label small">WG Server IP <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="The LAN IP address of your wg-easy container."></i></label>
+                            <input type="text" class="form-control form-control-sm mb-2" id="wgIp" value="192.168.1.200">
+                            
+                            <label class="form-label small">WG Client Subnet <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="The internal subnet defined in wg-easy (default 10.8.0.x or similar)."></i></label>
+                            <input type="text" class="form-control form-control-sm" id="wgSubnet" value="10.10.10.0/24">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white fw-bold">4. Additional Services</div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="addSocks" checked onchange="toggleFields()">
+                            <label class="form-check-label">SOCKS5 Proxy (Port 1080) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Creates a SOCKS5 proxy that routes traffic through the VPN."></i></label>
+                        </div>
+                        
+                        <div id="socksSettings" class="ms-4 mb-3">
+                             <label class="form-label small">Proxy Allowed IPs</label>
+                             <input type="text" class="form-control form-control-sm" id="socksAllowed" value="192.168.1.0/24,127.0.0.1/32">
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="addPrivoxy">
+                            <label class="form-check-label">HTTP Proxy (Privoxy, Port 8118) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Creates an HTTP proxy with basic ad-blocking capabilities."></i></label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="addAdguard">
+                            <label class="form-check-label">AdGuard Home (DNS) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Adds AdGuard Home routed through the VPN. Prevents DNS leaks for your network."></i></label>
+                        </div>
+                        <div class="form-check" id="addWgEasyWrapper">
+                            <input class="form-check-input" type="checkbox" id="addWgEasy" onchange="syncWgToggle()">
+                            <label class="form-check-label">wg-easy (WireGuard UI) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Adds the wg-easy container configured to use this gateway."></i></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion mb-4" id="expertAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingExpert">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExpert">
+                                ⚙️ Expert / Tuning Settings
+                            </button>
+                        </h2>
+                        <div id="collapseExpert" class="accordion-collapse collapse" data-bs-parent="#expertAccordion">
+                            <div class="accordion-body">
+                                
+                                <h6 class="fw-bold mt-2">Protocol & Crypto</h6>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-4">
+                                        <label class="form-label small">Technology</label>
+                                        <select class="form-select form-select-sm" id="vpnTech" onchange="toggleFields()">
+                                            <option value="NordLynx" selected>NordLynx</option>
+                                            <option value="OpenVPN">OpenVPN</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-4" id="protoDiv" style="display:none;">
+                                        <label class="form-label small">Protocol</label>
+                                        <select class="form-select form-select-sm" id="vpnProtocol">
+                                            <option value="udp" selected>UDP</option>
+                                            <option value="tcp">TCP</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label small">VPN MTU <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Leave 'auto' for automatic binary search detection. Or set a fixed value (e.g. 1360)."></i></label>
+                                        <input type="text" class="form-control form-control-sm" id="vpnMtu" value="auto">
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="postQuantum" checked>
+                                    <label class="form-check-label small">Post-Quantum Encryption <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="New encryption standard. Disable if you experience connection issues."></i></label>
+                                </div>
+
+                                <h6 class="fw-bold mt-3">Performance Self-Healing <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Automatically reconnects to a new server if download speed drops below the threshold."></i></h6>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label small">Speed Check Interval (min)</label>
+                                        <input type="number" class="form-control form-control-sm" id="speedInterval" value="30" oninput="toggleFields()">
+                                        <div class="form-text small">0 = Disabled</div>
+                                    </div>
+                                    <div class="col-6" id="divMinSpeed">
+                                        <label class="form-label small">Min Speed (Mbit/s)</label>
+                                        <input type="number" class="form-control form-control-sm" id="minSpeed" value="20">
+                                    </div>
+                                </div>
+
+                                <h6 class="fw-bold mt-3">Maintenance Timers</h6>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6" id="divBestServerInterval">
+                                        <label class="form-label small">Best Server Check (min) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="How often to re-evaluate which server has the best ping in the background."></i></label>
+                                        <input type="number" class="form-control form-control-sm" id="bestServerInterval" value="30">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">VPN Refresh / Rotate IP (min) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Forces a reconnect periodically to change your public IP address. 0 = Disabled."></i></label>
+                                        <input type="number" class="form-control form-control-sm" id="vpnRefresh" value="0">
+                                    </div>
+                                </div>
+
+                                <h6 class="fw-bold mt-3">Health & Reliability</h6>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-4">
+                                        <label class="form-label small">Check Int. (s) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="How often the container checks the connection status."></i></label>
+                                        <input type="number" class="form-control form-control-sm" id="checkInterval" value="60">
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label small">Conn. Timeout (s)</label>
+                                        <input type="number" class="form-control form-control-sm" id="connectTimeout" value="30">
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label small">Log Status (min)</label>
+                                        <input type="number" class="form-control form-control-sm" id="logStatus" value="60">
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small">Retry Count <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Attempts before restarting the VPN service."></i></label>
+                                        <input type="number" class="form-control form-control-sm" id="retryCount" value="2">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Retry Delay (s)</label>
+                                        <input type="number" class="form-control form-control-sm" id="retryDelay" value="2">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check form-switch mt-3">
+                                    <input class="form-check-input" type="checkbox" id="showHooks">
+                                    <label class="form-check-label small">Show WG Hooks (Log) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Prints recommended WireGuard iptables rules to the container logs on startup."></i></label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="debugMode">
+                                    <label class="form-check-label small">Debug Logging</label>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="col-lg-7">
+            
+            <div class="sticky-top" style="top: 20px;">
+                <div class="card shadow mb-3">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <strong>docker-compose.yml</strong>
+                        <div>
+                            <button class="btn btn-sm btn-outline-light me-2" onclick="copyCode()">📋 Copy</button>
+                            <button class="btn btn-sm btn-success" onclick="downloadCode()">💾 Download</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0 bg-dark">
+                        <textarea id="yamlOutput" class="form-control code-block border-0" rows="35" readonly></textarea>
+                    </div>
+                </div>
+
+                <div class="card border-danger shadow-sm" id="wgHooksCard" style="display:none;">
+                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                        <strong>WireGuard Web UI Config (Copy to wg-easy)</strong>
+                    </div>
+                    <div class="card-body bg-light">
+                        <p class="small text-muted mb-2">
+                            Paste these commands into the <strong>wg-easy Web UI</strong> (Settings -> Server) to route client traffic through the VPN gateway.
+                        </p>
+                        
+                        <label class="form-label small fw-bold">Post-up script:</label>
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="text" class="form-control hook-box" id="hookPostUp" readonly>
+                            <button class="btn btn-outline-secondary" onclick="copyHook('hookPostUp')">Copy</button>
+                        </div>
+
+                        <label class="form-label small fw-bold">Post-down script:</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control hook-box" id="hookPostDown" readonly>
+                            <button class="btn btn-outline-secondary" onclick="copyHook('hookPostDown')">Copy</button>
+                        </div>
+                        <div class="form-text small mt-1 text-end fst-italic">
+                            Check if <span id="routerIpDisplay">192.168.1.1</span> is your correct Router IP for Post-down.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Initialize Bootstrap Tooltips
+    document.addEventListener("DOMContentLoaded", function(){
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+<script src="generator.js"></script>
+</body>
+</html>
