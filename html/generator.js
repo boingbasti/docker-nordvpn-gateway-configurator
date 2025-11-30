@@ -71,8 +71,15 @@ function syncWgToggle() {
 }
 
 function generateHooks() {
+    // 1. Hole notwendige Variablen
     const gwIp = document.getElementById('gatewayIp').value || '192.168.1.100';
+    const wgSubnet = document.getElementById('wgSubnet').value || '10.8.0.0/24';
     
+    // Hole das erste LAN-Subnetz aus der Allowlist für die Masquerading-Regel (V1)
+    const allowlistVal = document.getElementById('allowlist').value;
+    const lanSubnet = allowlistVal.split(',')[0].trim() || '192.168.1.0/24';
+
+    // Berechne Router IP für V2 PostDown Fallback
     const parts = gwIp.split('.');
     let routerIp = '192.168.1.1';
     if(parts.length === 4) {
@@ -80,11 +87,27 @@ function generateHooks() {
         routerIp = parts.join('.');
     }
 
-    const postUp = `ip route del default; ip route add default via ${gwIp}; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE`;
-    const postDown = `ip route del default; ip route add default via ${routerIp}; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE`;
+    // --- VARIANT 1: LAN Access (Recommended) ---
+    // Nutzt Split-Routing (0.0.0.0/1) und Masquerading für LAN-Ziele
+    const v1_Up = `ip route add 0.0.0.0/1 via ${gwIp}; ip route add 128.0.0.0/1 via ${gwIp}; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -s ${wgSubnet} -d ${lanSubnet} -o eth0 -j MASQUERADE`;
+    
+    const v1_Down = `ip route del 0.0.0.0/1; ip route del 128.0.0.0/1; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -s ${wgSubnet} -d ${lanSubnet} -o eth0 -j MASQUERADE`;
 
-    document.getElementById('hookPostUp').value = postUp;
-    document.getElementById('hookPostDown').value = postDown;
+
+    // --- VARIANT 2: Internet Only (Strict) ---
+    // Löscht default route. Kein LAN Zugriff möglich.
+    const v2_Up = `ip route del default; ip route add default via ${gwIp}; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE`;
+    
+    const v2_Down = `ip route del default; ip route add default via ${routerIp}; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE`;
+
+
+    // 3. Update UI
+    document.getElementById('hookPostUpV1').value = v1_Up;
+    document.getElementById('hookPostDownV1').value = v1_Down;
+    
+    document.getElementById('hookPostUpV2').value = v2_Up;
+    document.getElementById('hookPostDownV2').value = v2_Down;
+
     document.getElementById('routerIpDisplay').innerText = routerIp;
 }
 
