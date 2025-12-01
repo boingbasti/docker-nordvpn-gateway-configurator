@@ -253,6 +253,7 @@ function generateYAML() {
 
     // --- WG-EASY ---
     if (mode === 'advanced' && addWgEasy) {
+        yaml += `  # WireGuard Server (UI: http://${wgIp}:51821)\n`;
         yaml += `  wg-easy:\n    image: ghcr.io/wg-easy/wg-easy:15\n    container_name: wg-easy\n    networks:\n      ${netName}:\n        ipv4_address: ${wgIp}\n    depends_on: [vpn]\n    cap_add: [NET_ADMIN, SYS_MODULE]\n    volumes:\n      - ./wg-easy-data:/etc/wireguard\n      - /lib/modules:/lib/modules:ro\n    environment:\n      - INSECURE=true\n      - DISABLE_IPV6=true\n    sysctls:\n      - net.ipv6.conf.all.disable_ipv6=1\n`;
         
         if (addHealthchecks) {
@@ -264,6 +265,7 @@ function generateYAML() {
 
     // --- SOCKS5 ---
     if (addSocks) {
+        yaml += `  # SOCKS5 Proxy -> Access at ${gwIp}:1080\n`;
         yaml += `  socks5:\n    image: boingbasti/nordvpn-socks5:latest\n    container_name: nordvpn-socks5\n`;
         if (mode === 'advanced') yaml += `    depends_on: [vpn]\n    network_mode: "service:vpn"\n`;
         else yaml += `    network_mode: "service:vpn"\n    depends_on: [vpn]\n`;
@@ -279,6 +281,7 @@ function generateYAML() {
 
     // --- PRIVOXY ---
     if (addPrivoxy) {
+        yaml += `  # HTTP Proxy -> Access at ${gwIp}:8118\n`;
         yaml += `  http-proxy:\n    image: boingbasti/nordvpn-privoxy:latest\n    container_name: nordvpn-privoxy\n    network_mode: "service:vpn"\n    depends_on: [vpn]\n`;
         
         if (addHealthchecks) {
@@ -290,6 +293,7 @@ function generateYAML() {
 
     // --- ADGUARD ---
     if (addAdguard) {
+        yaml += `  # AdGuard Home -> Access UI at http://${gwIp}:80 (or 3000 for setup)\n`;
         yaml += `  adguardhome:\n    image: adguard/adguardhome:latest\n    container_name: nordvpn-adguard\n    network_mode: "service:vpn"\n    depends_on: [vpn]\n    volumes:\n      - ./adguard-work:/opt/adguardhome/work\n      - ./adguard-config:/opt/adguardhome/conf\n    cap_add: [NET_ADMIN]\n`;
         
         if (addHealthchecks) {
