@@ -253,7 +253,7 @@ function generateYAML() {
 
     // --- WG-EASY ---
     if (mode === 'advanced' && addWgEasy) {
-        yaml += `  wg-easy:\n    image: ghcr.io/wg-easy/wg-easy:15\n    container_name: wg-easy\n    networks:\n      ${netName}:\n        ipv4_address: ${wgIp}\n    depends_on: [vpn]\n    cap_add: [NET_ADMIN, SYS_MODULE]\n    volumes:\n      - ./wg-easy-data:/etc/wireguard\n      - /lib/modules:/lib/modules:ro\n    environment:\n      - WG_HOST=YOUR_DDNS_HERE\n      - PASSWORD=YOUR_PASSWORD\n      - DISABLE_IPV6=true\n    sysctls:\n      - net.ipv6.conf.all.disable_ipv6=1\n`;
+        yaml += `  wg-easy:\n    image: ghcr.io/wg-easy/wg-easy:15\n    container_name: wg-easy\n    networks:\n      ${netName}:\n        ipv4_address: ${wgIp}\n    depends_on: [vpn]\n    cap_add: [NET_ADMIN, SYS_MODULE]\n    volumes:\n      - ./wg-easy-data:/etc/wireguard\n      - /lib/modules:/lib/modules:ro\n    environment:\n      - INSECURE=true\n      - DISABLE_IPV6=true\n    sysctls:\n      - net.ipv6.conf.all.disable_ipv6=1\n`;
         
         if (addHealthchecks) {
             yaml += `    healthcheck:\n      test: ["CMD", "ping", "-c", "1", "-W", "5", "1.1.1.1"]\n      interval: 60s\n      timeout: 10s\n      retries: 3\n      start_period: 2m\n`;
