@@ -147,6 +147,7 @@ function generateYAML() {
     const retryCount = document.getElementById('retryCount').value;
     const retryDelay = document.getElementById('retryDelay').value;
     
+    const addHealthchecks = document.getElementById('addHealthchecks').checked;
     const debug = document.getElementById('debugMode').checked;
     const showHooks = document.getElementById('showHooks').checked;
 
@@ -252,7 +253,13 @@ function generateYAML() {
 
     // --- WG-EASY ---
     if (mode === 'advanced' && addWgEasy) {
-        yaml += `  wg-easy:\n    image: ghcr.io/wg-easy/wg-easy:15\n    container_name: wg-easy\n    networks:\n      ${netName}:\n        ipv4_address: ${wgIp}\n    depends_on: [vpn]\n    cap_add: [NET_ADMIN, SYS_MODULE]\n    volumes:\n      - ./wg-easy-data:/etc/wireguard\n      - /lib/modules:/lib/modules:ro\n    environment:\n      - WG_HOST=YOUR_DDNS_HERE\n      - PASSWORD=YOUR_PASSWORD\n      - DISABLE_IPV6=true\n    sysctls:\n      - net.ipv6.conf.all.disable_ipv6=1\n    restart: unless-stopped\n\n`;
+        yaml += `  wg-easy:\n    image: ghcr.io/wg-easy/wg-easy:15\n    container_name: wg-easy\n    networks:\n      ${netName}:\n        ipv4_address: ${wgIp}\n    depends_on: [vpn]\n    cap_add: [NET_ADMIN, SYS_MODULE]\n    volumes:\n      - ./wg-easy-data:/etc/wireguard\n      - /lib/modules:/lib/modules:ro\n    environment:\n      - WG_HOST=YOUR_DDNS_HERE\n      - PASSWORD=YOUR_PASSWORD\n      - DISABLE_IPV6=true\n    sysctls:\n      - net.ipv6.conf.all.disable_ipv6=1\n`;
+        
+        if (addHealthchecks) {
+            yaml += `    healthcheck:\n      test: ["CMD", "ping", "-c", "1", "-W", "5", "1.1.1.1"]\n      interval: 60s\n      timeout: 10s\n      retries: 3\n      start_period: 2m\n`;
+        }
+        
+        yaml += `    restart: unless-stopped\n\n`;
     }
 
     // --- SOCKS5 ---
@@ -263,17 +270,33 @@ function generateYAML() {
         
         yaml += `    environment:\n      - PROXY_PORT=1080\n      - ALLOWED_IPS=${socksIps}\n`;
         
+        if (addHealthchecks) {
+            yaml += `    healthcheck:\n      test: ["CMD", "curl", "-fsSL", "--max-time", "5", "-x", "socks5h://localhost:1080", "https://1.1.1.1"]\n      interval: 60s\n      timeout: 10s\n      retries: 3\n      start_period: 1m\n`;
+        }
+        
         yaml += `    restart: unless-stopped\n\n`;
     }
 
     // --- PRIVOXY ---
     if (addPrivoxy) {
-        yaml += `  http-proxy:\n    image: boingbasti/nordvpn-privoxy:latest\n    container_name: nordvpn-privoxy\n    network_mode: "service:vpn"\n    depends_on: [vpn]\n    restart: unless-stopped\n\n`;
+        yaml += `  http-proxy:\n    image: boingbasti/nordvpn-privoxy:latest\n    container_name: nordvpn-privoxy\n    network_mode: "service:vpn"\n    depends_on: [vpn]\n`;
+        
+        if (addHealthchecks) {
+            yaml += `    healthcheck:\n      test: ["CMD", "curl", "-fsSL", "--max-time", "5", "-x", "http://localhost:8118", "https://1.1.1.1"]\n      interval: 60s\n      timeout: 10s\n      retries: 3\n      start_period: 1m\n`;
+        }
+        
+        yaml += `    restart: unless-stopped\n\n`;
     }
 
     // --- ADGUARD ---
     if (addAdguard) {
-        yaml += `  adguardhome:\n    image: adguard/adguardhome:latest\n    container_name: nordvpn-adguard\n    network_mode: "service:vpn"\n    depends_on: [vpn]\n    volumes:\n      - ./adguard-work:/opt/adguardhome/work\n      - ./adguard-config:/opt/adguardhome/conf\n    cap_add: [NET_ADMIN]\n    restart: unless-stopped\n\n`;
+        yaml += `  adguardhome:\n    image: adguard/adguardhome:latest\n    container_name: nordvpn-adguard\n    network_mode: "service:vpn"\n    depends_on: [vpn]\n    volumes:\n      - ./adguard-work:/opt/adguardhome/work\n      - ./adguard-config:/opt/adguardhome/conf\n    cap_add: [NET_ADMIN]\n`;
+        
+        if (addHealthchecks) {
+            yaml += `    healthcheck:\n      test: ["CMD", "nslookup", "google.com", "1.1.1.1"]\n      interval: 60s\n      timeout: 10s\n      retries: 3\n      start_period: 2m\n`;
+        }
+        
+        yaml += `    restart: unless-stopped\n\n`;
     }
 
     // --- NETWORKS ---

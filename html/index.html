@@ -326,7 +326,7 @@
                                 <div class="row g-2 mb-2">
                                     <div class="col-4">
                                         <label class="form-label small">Interval (min)</label>
-                                        <input type="number" class="form-control form-control-sm" id="speedInterval" value="30" oninput="toggleFields()">
+                                        <input type="number" class="form-control form-control-sm" id="speedInterval" value="60" oninput="toggleFields()">
                                         <div class="form-text small">0 = Disabled</div>
                                     </div>
                                     <div class="col-4" id="divMinSpeed">
@@ -361,11 +361,11 @@
                                         <input type="number" class="form-control form-control-sm" id="checkInterval" value="60">
                                     </div>
                                     <div class="col-4">
-                                        <label class="form-label small">Conn. Timeout (s)</label>
+                                        <label class="form-label small">Conn. Timeout (s) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Max time to wait for connection before retrying."></i></label>
                                         <input type="number" class="form-control form-control-sm" id="connectTimeout" value="30">
                                     </div>
                                     <div class="col-4">
-                                        <label class="form-label small">Log Status (min)</label>
+                                        <label class="form-label small">Log Status (min) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Interval for printing connection stats (uptime, data transfer) to logs."></i></label>
                                         <input type="number" class="form-control form-control-sm" id="logStatus" value="60">
                                     </div>
                                 </div>
@@ -375,12 +375,17 @@
                                         <input type="number" class="form-control form-control-sm" id="retryCount" value="2">
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label small">Retry Delay (s)</label>
+                                        <label class="form-label small">Retry Delay (s) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Seconds to wait between connectivity check attempts."></i></label>
                                         <input type="number" class="form-control form-control-sm" id="retryDelay" value="2">
                                     </div>
                                 </div>
                                 
                                 <div class="form-check form-switch mt-3">
+                                    <input class="form-check-input" type="checkbox" id="addHealthchecks" onchange="generateYAML()">
+                                    <label class="form-check-label small">Add Service Healthchecks <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Adds healthcheck blocks to optional services."></i></label>
+                                </div>
+                                
+                                <div class="form-check form-switch mt-2">
                                     <input class="form-check-input" type="checkbox" id="showHooks">
                                     <label class="form-check-label small">Show WG Hooks (Log) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Prints recommended WireGuard iptables rules to the container logs on startup."></i></label>
                                 </div>
@@ -419,7 +424,7 @@
                     </div>
                     <div class="card-body bg-light">
                         <p class="small text-muted mb-2">
-                            Paste these commands into the <strong>wg-easy Web UI</strong> (Settings -> Server) to route client traffic through the VPN gateway.
+                            Paste these commands into the <strong>wg-easy Web UI</strong> (Admin Console -> Hooks) to route client traffic through the VPN gateway.
                         </p>
                         
                         <div class="mb-3 border-bottom pb-3">
