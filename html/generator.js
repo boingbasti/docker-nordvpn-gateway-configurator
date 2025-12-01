@@ -33,7 +33,9 @@ function toggleFields() {
 
     // Performance Self-Healing dependency
     const speedInterval = document.getElementById('speedInterval').value;
-    document.getElementById('divMinSpeed').style.visibility = (speedInterval > 0) ? 'visible' : 'hidden';
+    const showSpeedSettings = (speedInterval > 0) ? 'visible' : 'hidden';
+    document.getElementById('divMinSpeed').style.visibility = showSpeedSettings;
+    document.getElementById('divSpeedSize').style.visibility = showSpeedSettings;
 
     // Hide WG Easy option in simple mode
     if(mode === 'simple') {
@@ -134,6 +136,8 @@ function generateYAML() {
     
     const speedInterval = document.getElementById('speedInterval').value;
     const minSpeed = document.getElementById('minSpeed').value;
+    const speedSize = document.getElementById('speedTestSize').value;
+    
     const bestServerInterval = document.getElementById('bestServerInterval').value;
     const vpnRefresh = document.getElementById('vpnRefresh').value;
     const checkInterval = document.getElementById('checkInterval').value;
@@ -212,6 +216,11 @@ function generateYAML() {
         yaml += `      # Performance Self-Healing\n`;
         yaml += `      - VPN_SPEED_CHECK_INTERVAL=${speedInterval}\n`;
         yaml += `      - VPN_MIN_SPEED=${minSpeed}\n`;
+        
+        // --- NEW: Add File Size Config if Large ---
+        if (speedSize === '100') {
+             yaml += `      - SPEED_TEST_URL=http://cachefly.cachefly.net/100mb.test\n`;
+        }
     }
     
     if (vpnRefresh > 0) yaml += `      - VPN_REFRESH=${vpnRefresh}\n`;
