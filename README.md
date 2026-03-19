@@ -46,7 +46,6 @@ docker run -d \
 ### 2. Run via Docker Compose
 
 ```yaml
-version: "3.9"
 services:
   configurator:
     image: boingbasti/nordvpn-gateway-configurator:latest

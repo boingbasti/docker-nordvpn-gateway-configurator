@@ -1,12 +1,9 @@
-FROM nginx:alpine
+FROM nginx:alpine3.23
 
-# Metadaten
 LABEL maintainer="boingbasti"
 LABEL description="Configuration Generator for NordVPN Gateway"
 
-# Kopiere die Webseiten-Dateien in den Nginx-Ordner
-# (Stelle sicher, dass du index.html und generator.js im Unterordner 'html' hast)
+# Copy web files into nginx html folder
 COPY ./html /usr/share/nginx/html
 
-# Exponiere Port 80
 EXPOSE 80

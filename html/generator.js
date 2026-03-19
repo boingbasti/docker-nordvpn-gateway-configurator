@@ -165,7 +165,7 @@ function generateYAML() {
 
 
     // 2. Build YAML
-    let yaml = `version: "3.9"\n\nservices:\n`;
+    let yaml = `services:\n`;
 
     // --- VPN SERVICE ---
     yaml += `  vpn:\n`;
