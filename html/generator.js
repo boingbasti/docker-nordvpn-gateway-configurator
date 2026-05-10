@@ -50,9 +50,12 @@ function toggleFields() {
     document.getElementById('socksSettings').style.display = addSocks ? 'block' : 'none';
     
     // Token Warning Logic
-    const token = document.getElementById('vpnToken').value;
     const embedToken = document.getElementById('embedToken').checked;
+    const tokenInput = document.getElementById('vpnToken');
+    const token = tokenInput.value;
     const warning = document.getElementById('tokenWarning');
+    tokenInput.disabled = !embedToken;
+    if (!embedToken) tokenInput.value = '';
     if (embedToken && !token) {
         warning.style.display = 'block';
     } else {
@@ -133,6 +136,7 @@ function generateYAML() {
     const killswitch = document.getElementById('killswitch').checked;
     const tpl = document.getElementById('tpl').checked;
     const pq = document.getElementById('postQuantum').checked;
+    const lanDiscovery = document.getElementById('lanDiscovery').checked;
     
     const speedInterval = document.getElementById('speedInterval').value;
     const minSpeed = document.getElementById('minSpeed').value;
@@ -208,7 +212,8 @@ function generateYAML() {
     
     if (killswitch) yaml += `      - KILLSWITCH=on\n`; else yaml += `      - KILLSWITCH=off\n`;
     if (tpl) yaml += `      - THREAT_PROTECTION_LITE=on\n`;
-    if (!pq) yaml += `      - POST_QUANTUM=off\n`; 
+    if (!pq) yaml += `      - POST_QUANTUM=off\n`;
+    if (lanDiscovery) yaml += `      - LAN_DISCOVERY=on\n`;
     
     yaml += `      - VPN_MTU=${mtu}\n`;
     

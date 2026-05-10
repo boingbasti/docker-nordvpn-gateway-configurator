@@ -59,7 +59,7 @@
                     <div class="card-header bg-success text-white fw-bold">2. VPN Connection</div>
                     <div class="card-body">
                         <label class="form-label fw-bold">Authentication</label>
-                        <input type="text" class="form-control mb-2" id="vpnToken" placeholder="Paste Token here (optional)" oninput="toggleFields()">
+                        <input type="text" class="form-control mb-2" id="vpnToken" placeholder="Paste Token here (optional)" oninput="toggleFields()" disabled>
                         <div class="form-check mb-1">
                             <input class="form-check-input" type="checkbox" id="embedToken" onchange="toggleFields()">
                             <label class="form-check-label text-danger small">Embed Token in YAML (Insecure!) <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="If checked, the token is written directly into the file. If unchecked (recommended), it uses a file mount (secrets)."></i></label>
@@ -227,6 +227,10 @@
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="tpl" checked>
                             <label class="form-check-label">Threat Protection Lite <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Enables DNS-based blocking of ads, trackers, and malicious domains."></i></label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="lanDiscovery">
+                            <label class="form-check-label">LAN Discovery <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Allows access to local network devices while the VPN killswitch is active. Alternative to ALLOWLIST_SUBNET for simple setups."></i></label>
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="autoConnect" checked onchange="toggleFields()">
