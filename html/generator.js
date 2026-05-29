@@ -93,17 +93,18 @@ function generateHooks() {
     }
 
     // --- VARIANT 1: LAN Access (Recommended) ---
-    // Uses split-routing (0.0.0.0/1) and masquerading for LAN destinations
-    const v1_Up = `ip route add 0.0.0.0/1 via ${gwIp}; ip route add 128.0.0.0/1 via ${gwIp}; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -s ${wgSubnet} -d ${lanSubnet} -o eth0 -j MASQUERADE`;
-    
-    const v1_Down = `ip route del 0.0.0.0/1; ip route del 128.0.0.0/1; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -s ${wgSubnet} -d ${lanSubnet} -o eth0 -j MASQUERADE`;
+    // Policy routing: only traffic from wg0 (WireGuard clients) routes through VPN gateway.
+    // wg-easy's own traffic uses the direct LAN route so handshake responses come from the correct IP.
+    const v1_Up = `ip rule add iif wg0 table 100; ip route add default via ${gwIp} table 100; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -s ${wgSubnet} -d ${lanSubnet} -o eth0 -j MASQUERADE`;
+
+    const v1_Down = `ip rule del iif wg0 table 100; ip route del default via ${gwIp} table 100; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -s ${wgSubnet} -d ${lanSubnet} -o eth0 -j MASQUERADE`;
 
 
     // --- VARIANT 2: Internet Only (Strict) ---
-    // Deletes default route. No local LAN access possible.
-    const v2_Up = `ip route del default; ip route add default via ${gwIp}; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE`;
-    
-    const v2_Down = `ip route del default; ip route add default via ${routerIp}; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE`;
+    // Same policy routing approach, no LAN masquerading.
+    const v2_Up = `ip rule add iif wg0 table 100; ip route add default via ${gwIp} table 100; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE`;
+
+    const v2_Down = `ip rule del iif wg0 table 100; ip route del default via ${gwIp} table 100; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE`;
 
 
     // 3. Update UI
