@@ -1,7 +1,27 @@
 function toggleFields() {
     const mode = document.getElementById('networkMode').value;
     const wgBypass = document.getElementById('wgBypass').checked;
-    const tech = document.getElementById('vpnTech').value;
+    // Group/technology constraints (NordVPN 6.x)
+    const group = document.getElementById('vpnGroup').value;
+    const techSelect = document.getElementById('vpnTech');
+    const whisperOption = techSelect.querySelector('option[value="NordWhisper"]');
+    const whisperUnsupported = (group === 'double_vpn' || group === 'onion_over_vpn');
+
+    if (group === 'obfuscated') {
+        // Obfuscated servers only work with NordWhisper
+        techSelect.value = 'NordWhisper';
+        techSelect.disabled = true;
+    } else if (techSelect.disabled) {
+        // Leaving 'obfuscated': undo the forced NordWhisper selection
+        techSelect.disabled = false;
+        techSelect.value = 'NordLynx';
+    }
+
+    // NordWhisper is not offered on Double VPN / Onion over VPN servers
+    whisperOption.disabled = whisperUnsupported;
+    if (whisperUnsupported && techSelect.value === 'NordWhisper') techSelect.value = 'NordLynx';
+
+    const tech = techSelect.value;
     
     // Show/Hide Macvlan
     document.getElementById('macvlanSettings').style.display = (mode === 'advanced') ? 'block' : 'none';
@@ -200,7 +220,7 @@ function generateYAML() {
         yaml += `      - VPN_SERVER=${server}\n`;
     } else {
         yaml += `      - VPN_COUNTRY=${country}\n`;
-        if (group !== 'p2p') yaml += `      - VPN_GROUP=${group}\n`;
+        if (group !== 'standard') yaml += `      - VPN_GROUP=${group}\n`;
     }
     
     yaml += `      - VPN_TECHNOLOGY=${tech}\n`;

@@ -22,7 +22,7 @@ A lightweight, web-based tool that interactively creates **valid and production-
   * VPN MTU & Killswitch
   * LAN Discovery
   * Smart Server Selection
-  * Threat Protection Lite
+  * Threat Protection (real-time protection)
   * Speed-Monitoring & Self-Healing
 * 🔗 **WireGuard Helper** — Automatically calculates the correct `PostUp` / `PostDown` commands based on your selected IP and subnet values.
 * 🌍 **Multi-Architecture** — Fully compatible with **AMD64**, **ARM64**, and **ARMv7** (Raspberry Pi).
@@ -73,6 +73,8 @@ The tool actively prevents configuration errors:
 | :--- | :--- |
 | **WireGuard Bypass** | If enabled, the generator **forces** 'Advanced Gateway' mode (macvlan) because bypass routing is impossible in bridge mode. |
 | **OpenVPN** | If 'OpenVPN' is selected as technology, the **Protocol** (UDP/TCP) dropdown automatically appears. |
+| **Obfuscated** | Selecting the 'Obfuscated' group automatically switches the technology to **NordWhisper** (required since NordVPN 6.x) and locks the technology field. |
+| **Double VPN / Onion** | NordWhisper is not available for these groups and is disabled in the technology dropdown. |
 | **Smart Selection** | If 'Smart Server Selection' is disabled, related fields (Check Interval) are hidden to keep the UI clean. |
 | **Token Safety** | The token input field is **locked** until 'Embed Token' is checked. Unchecking clears the field automatically. |
 | **AdGuard** | If AdGuard is enabled, the generator ensures it is attached via `network_mode: service:vpn` to prevent DNS leaks. |

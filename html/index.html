@@ -205,10 +205,9 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Group <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Server category. P2P is recommended for file sharing."></i></label>
-                                <select class="form-select" id="vpnGroup">
-                                    <option value="p2p" selected>P2P</option>
-                                    <option value="standard">Standard</option>
+                                <label class="form-label">Group <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Server category. Since NordVPN 6.x all servers support P2P. Obfuscated requires NordWhisper (selected automatically); NordWhisper is not available for Double VPN and Onion over VPN."></i></label>
+                                <select class="form-select" id="vpnGroup" onchange="toggleFields()">
+                                    <option value="standard" selected>Standard</option>
                                     <option value="double_vpn">Double VPN</option>
                                     <option value="onion_over_vpn">Onion over VPN</option>
                                     <option value="obfuscated">Obfuscated</option>
@@ -226,7 +225,7 @@
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="tpl" checked>
-                            <label class="form-check-label">Threat Protection Lite <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Enables DNS-based blocking of ads, trackers, and malicious domains."></i></label>
+                            <label class="form-check-label">Threat Protection <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" data-bs-title="Enables NordVPN real-time protection: blocks scam and phishing domains and reduces intrusive ads."></i></label>
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="lanDiscovery">
@@ -307,6 +306,7 @@
                                         <select class="form-select form-select-sm" id="vpnTech" onchange="toggleFields()">
                                             <option value="NordLynx" selected>NordLynx</option>
                                             <option value="OpenVPN">OpenVPN</option>
+                                            <option value="NordWhisper">NordWhisper</option>
                                         </select>
                                     </div>
                                     <div class="col-4" id="protoDiv" style="display:none;">

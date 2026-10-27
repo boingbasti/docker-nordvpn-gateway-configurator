@@ -1,4 +1,4 @@
-FROM nginx:alpine3.23
+FROM nginx:alpine3.24
 
 LABEL maintainer="boingbasti"
 LABEL description="Configuration Generator for NordVPN Gateway"
